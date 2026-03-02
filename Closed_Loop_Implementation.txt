@@ -1,0 +1,222 @@
+Title  : Closed-Loop Machine Learning Integration between NetSim and Python
+Project: Performance Optimization of UAV-assisted NTN Communication
+Author : Vinay Kusumanchi (IMT2023608)
+
+------------------------------------------------------------
+1. PROJECT OVERVIEW
+------------------------------------------------------------
+
+This project implements an open-loop and closed-loop machine learning framework
+to optimize performance metrics (Throughput, Delay, Jitter) in a UAV-assisted
+Non-Terrestrial Network (NTN) using NetSim and Python.
+
+NetSim is used for network simulation, while Python is used for dataset
+generation, ML model training, prediction, and automation of iterative runs.
+
+------------------------------------------------------------
+2. NetSim LICENSE SETUP AND CONSTRAINTS
+------------------------------------------------------------
+
+1. NetSim requires a valid license to execute simulations.
+2. Initially, NetSim simulations were run manually using the NetSim GUI.
+3. At this stage, simulations could not be executed from the command line,
+   which is required for automation and closed-loop execution.
+4. This limitation existed because the system was not configured to acquire
+   a floating license for terminal-based execution.
+
+------------------------------------------------------------
+3. FLOATING LICENSE CONFIGURATION
+------------------------------------------------------------
+
+1. A NetSim floating license was required to enable execution of simulations
+   through the command line.
+2. The floating license setup involved:
+   - Identifying the license server IP address
+   - Verifying network connectivity between the client system and license server
+   - Matching the system IP and license configuration
+3. After configuring the floating license:
+   - The system was able to successfully acquire the license dynamically
+   - NetSim could now be executed via terminal commands
+4. This step was critical because closed-loop automation requires NetSim to be
+   invoked programmatically after every ML iteration.
+5. Without a floating license, NetSim execution was limited to GUI-based runs,
+   making closed-loop automation infeasible.
+
+------------------------------------------------------------
+3.1 Remote Access to Lab System
+------------------------------------------------------------
+
+1. NetSim was installed and licensed on the laboratory system.
+2. Since local execution on the personal laptop was not possible,
+   TeamViewer was used to remotely access the lab machine.
+3. All closed-loop experiments, terminal executions, and automation
+   scripts were run on the lab system through this remote connection.
+
+------------------------------------------------------------
+3.2 File and Execution Handling Challenges
+------------------------------------------------------------
+
+1. During automation, the required NetSim executable and binary paths
+   were not initially detected by the Python scripts.
+2. Correct identification of NetSim binary (.exe / .bin) locations
+   was necessary to enable command-line execution.
+3. File paths for XML configuration files and output logs had to be
+   explicitly managed to ensure correct read/write operations
+   across iterations.
+4. These issues were resolved by validating execution paths and
+   standardizing file access within the Python scripts.
+
+------------------------------------------------------------
+4. NTN SCENARIO DESIGN IN NetSim
+------------------------------------------------------------
+
+1. A UAV-assisted NTN scenario was created in NetSim.
+2. The topology consisted of:
+   - One UAV acting as a base station
+   - One or five ground users depending on the experiment
+3. UAV mobility was defined using a trace file.
+4. Communication between UAV and users was configured using:
+   - UDP transport protocol
+   - Constant Bit Rate (CBR) traffic
+5. Tunable traffic parameters:
+   - Packet Size (Bytes)
+   - Inter-Arrival Time (IAT in microseconds)
+
+------------------------------------------------------------
+5. OPEN-LOOP DATASET GENERATION
+------------------------------------------------------------
+
+1. NetSim simulations were initially run manually for multiple combinations of:
+   - Packet Size
+   - Inter-Arrival Time (IAT)
+2. For each simulation run:
+   - NetSim generated Application_Packet_Log.csv
+3. From the packet logs:
+   - Average Throughput
+   - Average End-to-End Delay
+   - Average Jitter
+   were computed using Python.
+4. The extracted values were stored in CSV format to form the initial dataset.
+5. Separate datasets were prepared for:
+   - 1-user scenario
+   - 5-user scenario (average across users)
+
+------------------------------------------------------------
+6. MACHINE LEARNING MODEL (OPEN-LOOP)
+------------------------------------------------------------
+
+1. Python was used for ML processing.
+2. Random Forest Regression was selected due to:
+   - Ability to model nonlinear relationships
+   - Robust performance with limited data
+3. Input features:
+   - Packet Size
+   - Inter-Arrival Time
+4. Output targets:
+   - Throughput
+   - Delay
+   - Jitter
+5. The trained model predicted optimal Packet Size and IAT values.
+6. These predicted values were manually applied in NetSim for open-loop testing.
+
+------------------------------------------------------------
+7. NEED FOR CLOSED-LOOP AUTOMATION
+------------------------------------------------------------
+
+1. Open-loop optimization performs only a single prediction.
+2. The ML model does not adapt based on new simulation outcomes.
+3. To enable iterative learning and convergence, a closed-loop system was
+   required where NetSim feedback is continuously fed back to the ML model.
+
+------------------------------------------------------------
+8. CLOSED-LOOP NetSim–Python IMPLEMENTATION
+------------------------------------------------------------
+
+The closed-loop workflow operates as follows:
+
+Step 1:
+- Train the Random Forest model using the current dataset.
+
+Step 2:
+- Predict optimal Packet Size and Inter-Arrival Time.
+
+Step 3:
+- Python automatically updates the NetSim configuration file (Configuration.netsim).
+- The script uses XML parsing (xml.etree.ElementTree) to open the configuration file.
+- The <APPLICATION> block corresponding to the CBR application is located.
+- The PACKET_SIZE and INTER_ARRIVAL_TIME parameters are updated with the
+  ML-predicted values.
+- The modified XML file is saved back to disk.
+- This ensures that the next NetSim simulation uses the updated traffic parameters.
+
+Step 4:
+- The XML file is NOT executed directly.
+- Instead, Python executes NetSimCore.exe via a terminal command using
+  subprocess.run().
+- During execution, NetSim automatically reads the updated Configuration.netsim
+  file from the workspace directory.
+- The floating license enables NetSim to run through the command line without
+  opening the GUI.
+- As a result, each simulation run uses the latest ML-updated XML configuration.
+
+Step 5:
+- After simulation completion, extract Application_Packet_Log.csv.
+
+Step 6:
+- Compute average Throughput, Delay, and Jitter.
+
+Step 7:
+- Append newly obtained results to the dataset.
+
+Step 8:
+- Retrain the ML model using the expanded dataset.
+
+Step 9:
+- Repeat the loop until performance metrics converge.
+
+------------------------------------------------------------
+9. AUTOMATION DETAILS
+------------------------------------------------------------
+
+1. Python scripts were used to:
+   - Read and write CSV datasets
+   - Train and evaluate ML models
+   - Edit NetSim XML configuration files
+   - Trigger NetSim simulations via terminal
+2. Floating license availability ensured uninterrupted execution during
+   multiple closed-loop iterations.
+3. Error handling and file existence checks were incorporated to ensure
+   stable execution across multiple iterations.
+4. The XML configuration acts as an input file for NetSim and is modified
+   programmatically, while NetSimCore.exe is the executable that performs
+   the simulation.
+
+------------------------------------------------------------
+10. PERFORMANCE EVALUATION
+------------------------------------------------------------
+
+1. Closed-loop optimization was performed for:
+   - 1-user scenario
+   - 5-user scenario
+2. Observations:
+   - Throughput improved steadily across iterations
+   - Delay and jitter reduced due to smoother traffic patterns
+3. The 5-user scenario exhibited slightly higher delay and jitter due to
+   resource sharing, which reflects realistic network behavior.
+
+------------------------------------------------------------
+11. FINAL OUTCOME
+------------------------------------------------------------
+
+1. The closed-loop ML framework successfully demonstrated adaptive optimization
+   of traffic parameters in a UAV-assisted NTN.
+2. The implementation validates the feasibility of automated ML-driven
+   optimization using NetSim and Python.
+3. The workflow is extensible to:
+   - Multi-UAV systems
+   - Larger user densities
+   - Advanced ML and reinforcement learning techniques
+
+------------------------------------------------------------
+END OF FILE
+------------------------------------------------------------
