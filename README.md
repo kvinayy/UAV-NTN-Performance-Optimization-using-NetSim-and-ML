@@ -92,8 +92,8 @@ According to the NetSim topology (Report – Fig.1):
 
 Two scenarios were evaluated:
 
-✅ Single-user NTN link  
-✅ Five-user shared UAV network  
+Single-user NTN link  
+Five-user shared UAV network  
 
 ---
 
@@ -189,7 +189,7 @@ Relevant literature and standards are listed in [REFERENCES.md](REFERENCES.md)
 ## Author
 
 **Vinay Kusumanchi**  
-IMTech – Electronics & Communication Engineering  
+IMTech - Electronics & Communication Engineering  
 
 ---
 
